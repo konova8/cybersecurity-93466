@@ -169,7 +169,102 @@ They use a nonce along the key (seed) in the PRG, and the pair (key, nonce) is n
 
 Example: Salsa 20 (SW + HW), 10 round of function $h$, which is invertible and designed to be fast on x86
 
-## When a PRG is "secure"?
+### When a PRG is "secure"?
 > It needs to be **unpredictable**
 
 $$\forall i, \text{ there is no "efficient" way to predict bit } (i+1) \text{ for not negligible } \epsilon \\ \Rightarrow G: K \rightarrow {0, 1}^n \text{is predictable}$$
+
+#### Advantage
+**Statistical Test**: Algorithm $A: {0, 1}^n \rightarrow {0, 1}$
+
+Advantage is defined as the difference of the probability between $A(G(k))$ and $A(r)$, with a good statistica advantage you can distinguish G from Random
+
+#### Secure PRGs: crypto definition
+We say that $G: K \rightarrow {0,1}^n$ is a secure PRG if for every “efficient” statistical test $AR, $Adv_{PRG}[A,G]$ is “negligible”
+
+#### Thm: an unpredictable PRG is secure
+This is done by showing that PRG predictable implies that the PRG is insecure
+
+### Semantic security
+> What is a secure cipher?
+CipherText should reveal no "info" about PlainText, Shannon's idea
+
+#### Shannon's perfect secrecy
+Let $(E, D)$ be a cipher over $(K, M, C)$
+
+$$(E, D) \text{ has perfect secrecy if } \forall m_0, m_1 \in M (|m_0| = |m_1|) \\ { E(k,m_0) } = { E(k,m_1) } \text{ where } k \leftarrow K$$
+
+- The two distributions must be identical
+- Too strong definition
+    - It requires long keys
+    - Stream Ciphers can't satisfy it
+
+#### Weaker Definition
+> Rather than requiring the two distributions to be identical, we require them to be COMPUTATIONALLY INDISTINGUISHABLE
+
+- Also need adversary to exhibit $m_0, m_1 \in M$ explicitly
+
+#### One Time Key
+> $Q$ is *semantically secure* if for all "efficient" $A$, $Adv_{SS}[A, Q]$ is **negligible**
+
+## Block Ciphers
+They are built by iteration
+
+![Block ciphers built by iterations](assets/block-ciphers-built-by-iterations.png)
+
+$R(k, m)$ is a **round function**
+
+### Feistel Network
+![Feistel network](assets/feistel-network.png)
+
+Given $f_1, \dots, f_d: {0, 1}^n \rightarrow {0, 1}^n$ (not necessarily invertible), build an **invertible** function $F: {0, 1}^{2n} \rightarrow {0, 1}^{2n}$
+
+For every $f_i$ $F$ is invertible, you need to construct the inverse:
+$$R_{i-1} = L_i \\
+L_{i-1} = f_i(L_i) \oplus R_i$$
+
+This is used in many block ciphers, but not AES
+
+### DES (Data Encryption Standard)
+> A 16 round Fiestel network, with 64 bit as input, and a key of 56 bits (than you expand it to 16 keys of 48 bits each)
+
+Function $f_i(x) = F(k_i, x):
+
+![DES function](assets/des-function.png)
+
+S-boxes and P-box are chosen such that you can get a secure block cipher (choose that at random makes it not secure)
+
+### Exhaustive Search for block cipher key
+> Goal: given a few input output pairs $(m_i, c_i = E(k, mi)) \quad i = 1, \dots, 3$ find key k.
+
+**2 input/output pairs are enough for an exhaustive key search**
+
+### Exhaustive Search Attacks
+> DES can be broken really fast today -> 56-bit ciphers should not be used
+
+#### Strengthening DES against exhaustive search
+- Triple-DES
+    - Combine Encryption, Decryption and Encryption with 3 different keys
+    - Key length = 168 bits
+    - "Real" Key space = $2^118$
+    - Triple-DES prevents the Meet in the middle attack (get a partial encrypted message)
+        - You can do a MITM attack with Triple-DES but the key space become $2^118$
+    - This does not increase the security by that much, also this is slower
+- DESX
+    - Integrate XOR operations with 3 keys, but still insecure
+
+Quantum computers are much faster in breaking DES and it's variants
+
+### Advanced Encryption Standard
+- It's not a Feistel cipher
+- Can be partially computed in parallel
+- Block cipher that works iteratively
+- Each round (except the last) is a uniform and parallelal composition of 4 steps:
+    - SubBytes (byte-by-byte substitution using an S-box)
+    - ShiftRows (a permutation, which cyclically shifts the last three rows in the State)
+    - MixColumns (substitution that uses Galois Fields, corps de Galois, GF($2^8$) arithmetic)
+    - Add Round key (bit-by-bit XOR with an expanded key)
+
+![AES structure](assets/aes-structure.png)
+
+Note: 16 bytes = 128 bits
